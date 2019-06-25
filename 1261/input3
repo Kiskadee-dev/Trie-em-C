@@ -1,8 +1,13 @@
-3 2
+4 4
 expertise 20
 exper 5
-e 5
+e 999999000
+expertttttexpert 300
 expertise exper 
 .
-ex e e expertise exper
+ex expertise exper
+.
+expertttttexpert
+.
+e
 .
