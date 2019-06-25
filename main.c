@@ -9,10 +9,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+int tamanho_nodes_internos = 256;
+
 typedef struct node{
    char caractere;
    int tamanho_nodes_internos;
-   struct node* nodes_internos[256];
+   struct node* nodes_internos[1000];
    int dados;
    int termina;
    int profundidade;
@@ -20,7 +22,7 @@ typedef struct node{
 
 int tamanho_root = 1;
 
-int insere_string(char *str, int profundidade, Node* alvo){
+int insere_string(char *str, int profundidade, Node* alvo, int dados){
     if(profundidade < strlen(str)){
         printf("palavra = [%s] Tentando inserir [%c], profundidade=[%d]\n", str, str[profundidade], profundidade);
         Node* atual = alvo; //Alvo é o node escolhido, se inicia no root e depois desce até o fim.
@@ -28,7 +30,7 @@ int insere_string(char *str, int profundidade, Node* alvo){
             for(int i = 0; i < alvo->tamanho_nodes_internos; i++){ //Por hora, o root tem apenas 1 espaço
                 if(atual->nodes_internos[i]->caractere == str[profundidade]){
                     printf("Existe [%c]\n", str[profundidade]);
-                    insere_string(str, profundidade+1, atual->nodes_internos[i]);
+                    insere_string(str, profundidade+1, atual->nodes_internos[i], dados);
                     novo = 0;
                     break;
                 }
@@ -37,8 +39,6 @@ int insere_string(char *str, int profundidade, Node* alvo){
         if(novo){
             int cheio = 1;
             //Escolhe um node vago dentro do node
-            printf("%d nodes internos\n", alvo->tamanho_nodes_internos);
-            printf("tentando inserir dentro de [%c]\n", alvo->caractere);
             for(int i = 0; i < alvo->tamanho_nodes_internos; i++){
                 if(atual->nodes_internos[i]->caractere == '\0'){
                     printf("Lugar vago, inserindo [%c]\n", str[profundidade]);
@@ -55,18 +55,20 @@ int insere_string(char *str, int profundidade, Node* alvo){
                 atual->caractere = str[profundidade];
                 atual->termina=0;
                 atual->profundidade=profundidade;
-                atual->tamanho_nodes_internos=256;
+                atual->tamanho_nodes_internos=tamanho_nodes_internos;
                 for(int i = 0; i < atual->tamanho_nodes_internos; i++){
                     Node* n = malloc(sizeof(Node));
                     n->caractere = '\0';
                     atual->nodes_internos[i] = n;
                 }
-                insere_string(str, profundidade+1, atual);
+                insere_string(str, profundidade+1, atual, dados);
             }else{ //se é uma folha então forma uma palavra
                 atual->caractere = str[profundidade];
                 atual->termina=1;
+                atual->dados=dados;
                 atual->profundidade = profundidade;
-                atual->tamanho_nodes_internos=256;
+                atual->tamanho_nodes_internos=tamanho_nodes_internos;
+                printf("Nova palavra! => %d\n", dados);
                 for(int i = 0; i < atual->tamanho_nodes_internos; i++){
                     Node* n = malloc(sizeof(Node));
                     n->caractere = '\0';
@@ -81,14 +83,21 @@ int insere_string(char *str, int profundidade, Node* alvo){
 }
 
 int main(int argc, char** argv) {
-    char input[2000] = "ana";
     Node root;
-    root.tamanho_nodes_internos = 1;
-    *root.nodes_internos = calloc(1, sizeof(Node));
-    insere_string(input, 0, &root);
+    root.tamanho_nodes_internos = tamanho_nodes_internos;
+    for(int i = 0; i < root.tamanho_nodes_internos; i++){
+        root.nodes_internos[i] = malloc(sizeof(Node));
+    }
+   
+    char input[1000] = "ana";
+    insere_string(input, 0, &root, 2);
     printf("\n");
-    strcpy(input, "anajulia");
-    insere_string(input, 0, &root);
+    strcpy(input, "aca");
+    insere_string(input, 0, &root, 30);
+    strcpy(input, "ara");
+    insere_string(input, 0, &root, 40);
+    strcpy(input, "ala");
+    insere_string(input, 0, &root, 50);
     return (EXIT_SUCCESS);
 }
 
