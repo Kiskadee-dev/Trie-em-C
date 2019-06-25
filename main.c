@@ -20,6 +20,22 @@ typedef struct node{
 } Node;
 
 int verbose=0;
+char BUFFER[2000];
+
+void mostra_tudo(Node *node, int profundidade, char *buffer){
+    for(int i = 0; i < tamanho_nodes_internos; i++){
+        if(node->nodes_internos[i]->caractere != '\0'){ //Se tem um caractere
+            buffer[profundidade] = node->nodes_internos[i]->caractere; //adiciona ele ao buffer
+            if(node->nodes_internos[i]->termina){ //Faz o print da palavra e retorna
+                buffer[profundidade+1] = '\0';
+                printf("%s %d\n", buffer, node->nodes_internos[i]->dados);
+            }
+            mostra_tudo(node->nodes_internos[i], profundidade+1, buffer);
+        }
+    }
+    //Se remove do buffer
+    buffer[profundidade] = '\0';
+}
 
 int checa_string(char *str, int profundidade, Node* node){
     if(profundidade < strlen(str)-1){
@@ -120,7 +136,7 @@ int main(int argc, char** argv) {
     int score;
     while(scanf(" %[^\n]s", input) != EOF){
         scanf("%d", &score);
-        insere_string(input, 0, &root, score);
+        insere_string(input, 0, &root, strlen(input));
         if(verbose)
             printf("\n");
     }
@@ -128,5 +144,7 @@ int main(int argc, char** argv) {
     while (scanf(" %[^\n]s", str) != EOF){
         printf("se %s existe: [%d]\n", str, checa_string(str, 0, &root));
     }
+    printf("---------------------\n");
+    mostra_tudo(&root, 0, BUFFER);
     return (EXIT_SUCCESS);
 }
