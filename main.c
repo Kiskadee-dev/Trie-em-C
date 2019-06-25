@@ -34,11 +34,27 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
         }
         Node* atual = alvo; //Alvo é o node escolhido, se inicia no root e depois desce até o fim.
         int novo = 1;
-        if(atual->nodes_internos[str[profundidade]]->caractere != NULL){
-            if(verbose)
-                printf("Existe [%c]\n", str[profundidade]);
-            insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados);
+        if(atual->nodes_internos[str[profundidade]]->caractere != '\0'){
+            if(profundidade < strlen(str)-1){
+                if(verbose){
+                    printf("Existe [%c]\n", str[profundidade]);
+                }
+            }else{
+               if(!atual->nodes_internos[str[profundidade]]->termina){ //É uma letra existente mas é uma palavra nova
+                   atual->nodes_internos[str[profundidade]]->termina = 1;
+                    if(verbose){
+                       printf("Existe [%c], mas eh uma palavra nova\n", str[profundidade]);
+                    }
+                }else{
+                    if(verbose){
+                       printf("[%c] faz parte da palavra\n", str[profundidade]);
+                    }
+                }
+            }
+
+            insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
             novo = 0;
+            return 0;
         }
             
 
@@ -55,7 +71,7 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
             atual->tamanho_nodes_internos=tamanho_nodes_internos;
             for(int i = 0; i < atual->tamanho_nodes_internos; i++){ //Preenche os espaços dentro do node inserido
                 Node* n = malloc(sizeof(Node));
-                n->caractere = NULL;
+                n->caractere = '\0';
                 atual->nodes_internos[i] = n;
             }
             insere_string(str, profundidade+1, atual, dados);
@@ -69,7 +85,7 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
                 printf("Nova palavra! => %d\n", dados);
             for(int i = 0; i < atual->tamanho_nodes_internos; i++){
                 Node* n = malloc(sizeof(Node));
-                n->caractere = NULL;
+                n->caractere = '\0';
                 atual->nodes_internos[i] = n;
             }
         }
@@ -95,9 +111,13 @@ int main(int argc, char** argv) {
     strcpy(input, "Ana Julia");
     insere_string(input, 0, &root, 30);
     strcpy(input, "Ana Belle");
-    insere_string(input, 0, &root, 40);
-    strcpy(input, "Anu");
-    insere_string(input, 0, &root, 50);
+    insere_string(input, 0, &root, 30);
+    strcpy(input, "Anu Belle");
+    insere_string(input, 0, &root, 30);
+    strcpy(input, "Ann sahduascojdajidjdjfhsasd");
+    insere_string(input, 0, &root, 150);
+    strcpy(input, "Ann sahduascojdajlasdjasdiwjd");
+    insere_string(input, 0, &root, 100);
     return (EXIT_SUCCESS);
 }
 
