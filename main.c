@@ -20,7 +20,19 @@ typedef struct node{
 } Node;
 
 int verbose=0;
-char BUFFER[2000];
+char BUFFER[2000]; //Buffer de print da árvore, não espero que ela seja mais profunda que 2000
+
+void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória, incluindo o raiz. depth first
+    for(int i = 0; i < tamanho_nodes_internos; i++){
+        if(node->nodes_internos[i] != NULL){
+            limpa_arvore(node->nodes_internos[i], profundidade+1);
+        }
+    }
+    if(verbose){
+        printf("Limpando: [%c]\n", node->caractere);
+    }
+    free(node);
+}
 
 void mostra_tudo(Node* node, int profundidade, char *buffer){
     for(int i = 0; i < tamanho_nodes_internos; i++){
@@ -117,8 +129,11 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
 
 int main(int argc, char** argv) {
     if(argc > 1){
-        if(strcmp(argv[1], "--v") == 0){
-            verbose=1;
+        for(int i = 1; i < argc; i++){
+            if(strstr(argv[i], "--v")){
+                verbose=1;
+                break;
+            }
         }
     }
     //Cria o node inicial e aloca seus nodes internos
@@ -127,7 +142,6 @@ int main(int argc, char** argv) {
     char input[1000] = "Ana";
     int score;
     while(scanf("%s", input) != EOF){
-        scanf("%d", &score);
         insere_string(input, 0, root, strlen(input));
         if(verbose)
             printf("\n");
@@ -138,5 +152,6 @@ int main(int argc, char** argv) {
     }
     printf("---------------------\n");
     mostra_tudo(root, 0, BUFFER);
+    limpa_arvore(root, 0);
     return (EXIT_SUCCESS);
 }
