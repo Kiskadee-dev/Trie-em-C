@@ -19,7 +19,7 @@ typedef struct node{
    int profundidade;
 } Node;
 
-int verbose=0;
+int verbose = 0;
 char BUFFER[2000]; //Buffer de print da árvore, não espero que ela seja mais profunda que 2000
 
 void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória, incluindo o raiz. depth first
@@ -58,17 +58,19 @@ int checa_string(char *str, int profundidade, Node* node){
             return 0;
         }
     }else if(node->nodes_internos[str[profundidade]] != NULL){
-        if(node->nodes_internos[str[profundidade]]->termina)
-            return 1;
-        else
-            return 0; //Não forma uma palavra
+        if(node->nodes_internos[str[profundidade]]->termina){
+            return (EXIT_SUCCESS); //Encontrou a palavra
+        }
+        else{
+            return (EXIT_FAILURE); //Não forma uma palavra
+        }
     }else{
-        return 0; //Fim da string a verificar
+        return (EXIT_FAILURE); //Fim da string a verificar
     }
 }
 
 int insere_string(char *str, int profundidade, Node* alvo, int dados){
-    if(profundidade < strlen(str)){
+    if(str[profundidade] != '\0'){
         if(verbose){
             if(profundidade == 0){
                 printf("PALAVRA: [%s]\n", str);
@@ -82,6 +84,8 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
                 if(verbose){
                     printf("Existe [%c]\n", str[profundidade]);
                 }
+                insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
+                return (EXIT_SUCCESS);
             }else{
                if(!atual->nodes_internos[str[profundidade]]->termina){ //É uma letra existente mas é uma folha, portanto uma palavra nova
                    atual->nodes_internos[str[profundidade]]->termina = 1;
@@ -94,11 +98,9 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
                     if(verbose){
                        printf("[%c] faz parte da palavra\n", str[profundidade]);
                     }
+                    return (EXIT_SUCCESS);
                 }
             }
-
-            insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
-            return 0;
         }else{ //A letra não existe, é necessário inserir
             
             //Encontra um node vago dentro do node *Usando a letra como índice por performance
@@ -108,30 +110,27 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
             atual->nodes_internos[str[profundidade]] = node;
             atual = node;
 
+            atual->caractere = str[profundidade];
             if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
-                atual->caractere = str[profundidade];
-                atual->termina=0;
                 atual->profundidade=profundidade;
-
                 insere_string(str, profundidade+1, atual, dados); //Desce mais um nível
             }else{ //se é uma folha então forma uma palavra
-                atual->caractere = str[profundidade];
-                atual->termina=1;
-                atual->dados=dados;
+                atual->termina = 1;
+                atual->dados = dados;
                 atual->profundidade = profundidade;
                 if(verbose)
                     printf("Nova palavra! => %d\n", dados);
             }
         }
     }
-    return 1;
+    return (EXIT_FAILURE);
 }
 
 int main(int argc, char** argv) {
     if(argc > 1){
         for(int i = 1; i < argc; i++){
             if(strstr(argv[i], "--v")){
-                verbose=1;
+                verbose = 1;
                 break;
             }
         }
@@ -139,19 +138,15 @@ int main(int argc, char** argv) {
     //Cria o node inicial e aloca seus nodes internos
     Node* root = calloc(1, sizeof(Node));
     
-    char input[1000] = "Ana";
-    int score;
-    while(scanf("%s", input) != EOF){
+    char input[1000];
+    int n = 0;
+    while(scanf(" %[^\n]s", input) != EOF){
         insere_string(input, 0, root, strlen(input));
-        if(verbose)
-            printf("\n");
-    }
-    char str[] = "A";
-    while (scanf("%s", str) != EOF){
-        printf("se %s existe: [%d]\n", str, checa_string(str, 0, root));
+
     }
     printf("---------------------\n");
-    mostra_tudo(root, 0, BUFFER);
+    mostra_tudo(root, 0, BUFFER); 
     limpa_arvore(root, 0);
+
     return (EXIT_SUCCESS);
 }
