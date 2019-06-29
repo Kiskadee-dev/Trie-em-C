@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "escape_str.h"
 
 const int tamanho_nodes_internos = 256;
 
@@ -17,10 +18,16 @@ typedef struct node{
    int dados;
    int termina;
    int profundidade;
+   int ID; //A identificação da palavra no vetor
 } Node;
 
 int verbose = 0;
 char BUFFER[2000]; //Buffer de print da árvore, não espero que ela seja mais profunda que 2000
+
+char palavras_unicas[11234][2000];
+int indices_palavras[11234];
+int repeticoes_palavras[11234];
+int quantidade_palavras;
 
 void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória, incluindo o raiz. depth first
     for(int i = 0; i < tamanho_nodes_internos; i++){
@@ -29,7 +36,9 @@ void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória
         }
     }
     if(verbose){
-        printf("Limpando: [%c]\n", node->caractere);
+        if(profundidade == 0)
+            printf("Limpo.\n");
+        //printf("Limpando: [%c]\n", node->caractere);
     }
     free(node);
 }
@@ -94,10 +103,18 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
                     if(verbose){
                        printf("Existe [%c], mas eh uma palavra nova\n", str[profundidade]);
                     }
+                   ///// Insere a palavra no vetor de repetições como única
+                   strcpy(palavras_unicas[quantidade_palavras], str);
+                   indices_palavras[quantidade_palavras] = quantidade_palavras;
+                   atual->nodes_internos[str[profundidade]]->ID = quantidade_palavras;
+                   repeticoes_palavras[quantidade_palavras]++;
+                   quantidade_palavras++;
                 }else{
                     if(verbose){
                        printf("[%c] faz parte da palavra\n", str[profundidade]);
                     }
+                    //Aumenta o número de repetições desta palavra
+                    repeticoes_palavras[atual->nodes_internos[str[profundidade]]->ID]++;
                     return (EXIT_SUCCESS);
                 }
             }
@@ -120,33 +137,67 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
                 atual->profundidade = profundidade;
                 if(verbose)
                     printf("Nova palavra! => %d\n", dados);
+                ///// Insere a palavra no vetor de repetições como única
+                strcpy(palavras_unicas[quantidade_palavras], str);
+                indices_palavras[quantidade_palavras] = quantidade_palavras;
+                atual->ID = quantidade_palavras;
+                repeticoes_palavras[quantidade_palavras]++;
+
+                quantidade_palavras++;
             }
         }
     }
     return (EXIT_FAILURE);
 }
 
+int sort(const void *x, const void *y){
+    const int *a = x, *b = y;
+    if(repeticoes_palavras[*a] > repeticoes_palavras[*b]){
+        return -1;
+    }else if (repeticoes_palavras[*a] < repeticoes_palavras[*b]){
+        return 1;
+    }else{
+        return strcmp(palavras_unicas[*a], palavras_unicas[*b]);
+    }
+}
+
 int main(int argc, char** argv) {
-    if(argc > 1){
-        for(int i = 1; i < argc; i++){
-            if(strstr(argv[i], "--v")){
-                verbose = 1;
-                break;
+    FILE* input = fopen(argv[1], "r");
+    FILE* output = fopen(argv[2], "w");
+    
+    //Cria o node inicial e aloca seus nodes internos
+    Node* root = calloc(1, sizeof(Node));
+    char palavra[2000];
+    if(input != NULL){
+        while(fscanf(input, "%s", palavra) != EOF){ 
+            strcpy(palavra, escape_str(palavra));
+            if(strlen(palavra) > 0){
+                insere_string(palavra, 0, root, strlen(palavra));
+            }
+        }
+        //mostra_tudo(root, 0, BUFFER); 
+        limpa_arvore(root, 0);
+        fclose(input);
+    }
+    /*
+     * Ordena sob o seguinte critério.
+     * Palavras com mais repetições vem primeiro.
+     * Se uma palavra não tiver repetições, ela é omitida.
+     * Caso a palavra esteja empatada em repetições, ela é ordenada em ordem alfabética.
+     */
+    
+    qsort(indices_palavras, quantidade_palavras, sizeof(int), sort);
+    
+    for(int i = 0; i < quantidade_palavras; i++){
+        if(output != NULL){
+            if(repeticoes_palavras[indices_palavras[i]] > 1){
+                fprintf(output, "%s\n", palavras_unicas[indices_palavras[i]]);
+            }
+        }else{
+            if(repeticoes_palavras[indices_palavras[i]] > 1){
+                fprintf(stdout, "%s\n", palavras_unicas[indices_palavras[i]]);
             }
         }
     }
-    //Cria o node inicial e aloca seus nodes internos
-    Node* root = calloc(1, sizeof(Node));
-    
-    char input[1000];
-    int n = 0;
-    while(scanf(" %[^\n]s", input) != EOF){
-        insere_string(input, 0, root, strlen(input));
-
-    }
-    printf("---------------------\n");
-    mostra_tudo(root, 0, BUFFER); 
-    limpa_arvore(root, 0);
-
     return (EXIT_SUCCESS);
 }
