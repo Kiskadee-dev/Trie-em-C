@@ -43,7 +43,7 @@ void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória
     free(node);
 }
 
-void mostra_tudo(Node* node, int profundidade, char *buffer){
+void mostra_tudo(Node* node, int profundidade, char* buffer){
     for(int i = 0; i < tamanho_nodes_internos; i++){
         if(node->nodes_internos[i] != NULL){ //Se tem um caractere
             buffer[profundidade] = node->nodes_internos[i]->caractere; //adiciona ele ao buffer
@@ -58,7 +58,7 @@ void mostra_tudo(Node* node, int profundidade, char *buffer){
     buffer[profundidade] = '\0';
 }
 
-int checa_string(char *str, int profundidade, Node* node){
+int checa_string(char* str, int profundidade, Node* node){
     if(profundidade < strlen(str)-1){
         if(node->nodes_internos[str[profundidade]] != NULL){
             node = node->nodes_internos[str[profundidade]];
@@ -69,8 +69,7 @@ int checa_string(char *str, int profundidade, Node* node){
     }else if(node->nodes_internos[str[profundidade]] != NULL){
         if(node->nodes_internos[str[profundidade]]->termina){
             return (EXIT_SUCCESS); //Encontrou a palavra
-        }
-        else{
+        }else{
             return (EXIT_FAILURE); //Não forma uma palavra
         }
     }else{
@@ -78,7 +77,7 @@ int checa_string(char *str, int profundidade, Node* node){
     }
 }
 
-int insere_string(char *str, int profundidade, Node* alvo, int dados){
+int insere_string(char* str, int profundidade, Node* alvo, int dados){
     if(str[profundidade] != '\0'){
         if(verbose){
             if(profundidade == 0){
@@ -123,13 +122,12 @@ int insere_string(char *str, int profundidade, Node* alvo, int dados){
             //Encontra um node vago dentro do node *Usando a letra como índice por performance
             if(verbose)
                 printf("Inserindo [%c]\n", str[profundidade]);
-            Node *node = calloc(1, sizeof(Node));
+            Node* node = calloc(1, sizeof(Node));
             atual->nodes_internos[str[profundidade]] = node;
             atual = node;
 
             atual->caractere = str[profundidade];
             if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
-                atual->profundidade=profundidade;
                 insere_string(str, profundidade+1, atual, dados); //Desce mais um nível
             }else{ //se é uma folha então forma uma palavra
                 atual->termina = 1;
@@ -170,9 +168,9 @@ int main(int argc, char** argv) {
     char palavra[2000];
     if(input != NULL){
         while(fscanf(input, "%s", palavra) != EOF){ 
-            strcpy(palavra, escape_str(palavra));
-            if(strlen(palavra) > 0){
-                insere_string(palavra, 0, root, strlen(palavra));
+            strcpy(palavra, escape_str(palavra)); //Copia a palavra sanitizada para o buffer
+            if(strlen(palavra) > 0){ //Se a palavra não for vazia, insere
+                insere_string(palavra, 0, root, 0);
             }
         }
         //mostra_tudo(root, 0, BUFFER); 
@@ -189,7 +187,7 @@ int main(int argc, char** argv) {
     qsort(indices_palavras, quantidade_palavras, sizeof(int), sort);
     
     for(int i = 0; i < quantidade_palavras; i++){
-        if(output != NULL){
+        if(output != NULL){ //Se houver um destino, grava nele, senão, faz o print no stdout
             if(repeticoes_palavras[indices_palavras[i]] > 1){
                 fprintf(output, "%s\n", palavras_unicas[indices_palavras[i]]);
             }
@@ -198,6 +196,9 @@ int main(int argc, char** argv) {
                 fprintf(stdout, "%s\n", palavras_unicas[indices_palavras[i]]);
             }
         }
+    }
+    if(output != NULL){
+        fclose(output);
     }
     return (EXIT_SUCCESS);
 }
