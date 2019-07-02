@@ -35,9 +35,8 @@ void limpa_arvore(Node* node, int profundidade){ //Desaloca os nodes da memória
             limpa_arvore(node->nodes_internos[i], profundidade+1);
         }
     }
-    if(verbose){
-        if(profundidade == 0)
-            printf("Limpo.\n");
+    if(verbose && profundidade == 0){
+        printf("Limpo.\n");
         //printf("Limpando: [%c]\n", node->caractere);
     }
     free(node);
@@ -59,12 +58,15 @@ void mostra_tudo(Node* node, int profundidade, char* buffer){
 }
 
 int checa_string(char* str, int profundidade, Node* node){
-    if(profundidade < strlen(str)-1){
+    if(str[0] == '\0')
+        return (EXIT_FAILURE);
+
+    if(str[profundidade+1] != '\0'){
         if(node->nodes_internos[str[profundidade]] != NULL){
             node = node->nodes_internos[str[profundidade]];
             return checa_string(str, profundidade+1, node);
         }else{
-            return 0;
+            return (EXIT_FAILURE);
         }
     }else if(node->nodes_internos[str[profundidade]] != NULL){
         if(node->nodes_internos[str[profundidade]]->termina){
@@ -77,7 +79,28 @@ int checa_string(char* str, int profundidade, Node* node){
     }
 }
 
+int deleta_string(char* str, int profundidade, Node* node){
+    if(str[0] == '\0')
+        return (EXIT_FAILURE);
+    
+   if(node->nodes_internos[str[profundidade]] != NULL){ //Se o node interno existir, caminha até o fim da palavra
+        if(str[profundidade+1] != '\0'){ //Se não for a última letra da palavra
+            deleta_string(str, profundidade+1, node->nodes_internos[str[profundidade]]); //entra no próximo nível
+        }else{
+            if(node->nodes_internos[str[profundidade]]->termina){ //Se for a última letra e formar uma palavra,
+                node->nodes_internos[str[profundidade]]->termina = 0; //remove o marcador de palavra
+                return (EXIT_SUCCESS);
+            }
+        }
+   }else{
+        return (EXIT_FAILURE); 
+   }
+}
+
 int insere_string(char* str, int profundidade, Node* alvo, int dados){
+    if(str[0] == '\0')
+        return (EXIT_FAILURE);
+
     if(str[profundidade] != '\0'){
         if(verbose){
             if(profundidade == 0){
@@ -88,7 +111,7 @@ int insere_string(char* str, int profundidade, Node* alvo, int dados){
         }
         Node* atual = alvo; //Alvo é o node escolhido, se inicia na raiz e desce até o fim.
         if(atual->nodes_internos[str[profundidade]] != NULL){ //A letra existe, não é necessário inserir nada, desce para o próximo nível
-            if(profundidade < strlen(str)-1){
+            if(str[profundidade+1] != '\0'){
                 if(verbose){
                     printf("Existe [%c]\n", str[profundidade]);
                 }
