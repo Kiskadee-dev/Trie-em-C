@@ -6,5 +6,6 @@
  */
 
 char* escape_str(char* string);
+int ehnumero(char* str);
 
 
