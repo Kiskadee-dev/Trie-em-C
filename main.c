@@ -99,93 +99,31 @@ int deleta_string(char* str, int profundidade, Node* node){
    }
 }
 
-int insere_string(char* str, int profundidade, Node* alvo, int dados){
+int insere_string(char* str, int tamanho, int profundidade, Node* alvo, int dados){
     if(str[profundidade] == '\0') //Se a string terminou de maneira inesperada
         return (EXIT_FAILURE);
 
-    	/*
-	 * Realiza a segunda parte da sanitização da palavra,
-	 * Caso ela tenha alguma pontuação entre letras, ela representa duas palavras
-         * Caso seja um número, -3.14 , ele é lido por inteiro
-         * '-3.14,' não é um número, ',' não faz parte dos números
-	*/
-    if(!ehnumero(str) && str[profundidade] != "'"[0] ){
-        if(!isdigit(str[profundidade]) && !isalpha(str[profundidade])){ //Se o caractere atual for um ponto, passa para o próximo caractere.
-            insere_string(&str[profundidade+1], 0, root, dados); //Insere a outra parte da palavra dese o início da árvore
-            return (EXIT_SUCCESS);
-        }
+    /*
+     * Realiza a segunda parte da sanitização da palavra,
+     * Caso ela tenha alguma pontuação entre letras, ela representa duas palavras
+     * Caso seja um número, -3.14 , ele é lido por inteiro
+     * '-3.14,' não é um número, ',' não faz parte dos números
+     * e não dá para distinguir entre -3.14,2 e -3.14; 2
+     * Neste segundo caso será lido como -3; 14 e 2.
+     * 
+     * A próxima letra quebra a palavra em mais de uma, portanto, esta letra atual é a última     
+     * O caso especial apóstrofo ' é usado para abreviar algumas palavras, [it's] por exemplo.
+     * só se abrevia a palavra caso o apóstrofo seja posto antes da última letra.
+     * casos como [we're :: we are] são ignorados pois também forma uma palavra normal [were]
+     * 
+     * hífens são lidos normalmente, couve-flor é uma palavra só
+    */
 
-
-        /*
-         * A próxima letra quebra a palavra em mais de uma, portanto, esta letra atual é a última     
-         * O caso especial apóstrofo ' é usado para abreviar algumas palavras, [it's] por exemplo.
-         * só se abrevia a palavra caso o apóstrofo seja posto antes da última letra.
-         * casos como [we're :: we are] são ignorados pois também forma uma palavra normal [were]
-        */
-            
-        if(!isdigit(str[profundidade+1]) && !isalpha(str[profundidade+1]) && 
-                (str[profundidade+1] != "'"[0] && str[profundidade+2] == '\0')){
-
-            if(isdigit(str[profundidade]) || isalpha(str[profundidade])){ //Se a palavra atual for um número ou letra
-                strcpy(BUFFER, str);
-                //Copia para o buffer a palavra antes da próxima letra
-                BUFFER[profundidade+1] = '\0'; //O próximo caractere atual é alguma pontuação, portanto representa o fim da frase atual.
-
-                //Faz a inserção desta letra apenas!
-                if(alvo->nodes_internos[str[profundidade]] != NULL){
-                    if(!alvo->nodes_internos[str[profundidade]]->termina){ // letra existe, se ela não representar uma palavra, insere.
-                        alvo->nodes_internos[str[profundidade]]->termina = 1;
-                        alvo->nodes_internos[str[profundidade]]->dados = dados;
-                        if(verbose){
-                           printf("Existe [%c], mas eh uma palavra nova\n", str[profundidade]);
-                        }
-                        ///// Insere a palavra no vetor de repetições como única
-
-                        strcpy(palavras_unicas[quantidade_palavras], BUFFER); //Copia a parte da palavra para o vetor de repetições
-
-                        indices_palavras[quantidade_palavras] = quantidade_palavras;
-                        alvo->nodes_internos[str[profundidade]]->ID = quantidade_palavras;
-                        repeticoes_palavras[quantidade_palavras]++;
-                        quantidade_palavras++;
-                    }else{
-                        if(verbose){
-                           printf("[%c] faz parte da palavra\n", str[profundidade]);
-                        }
-                        //Aumenta o número de repetições desta palavra
-                        repeticoes_palavras[alvo->nodes_internos[str[profundidade]]->ID]++;
-                    }
-                }else{
-                    //Encontra um node vago dentro do node *Usando a letra como índice por performance
-                    if(verbose)
-                        printf("Inserindo [%c]\n", str[profundidade]);
-                    Node* node = calloc(1, sizeof(Node));
-                    alvo->nodes_internos[str[profundidade]] = node;
-                    alvo = node;
-                    alvo->caractere = str[profundidade];
-                    alvo->termina = 1;
-                    alvo->dados = dados;
-                    alvo->profundidade = profundidade;
-                    if(verbose)
-                        printf("Nova palavra! => %d\n", dados);
-                    ///// Insere a palavra no vetor de repetições como única
-                    strcpy(palavras_unicas[quantidade_palavras], BUFFER);
-                    indices_palavras[quantidade_palavras] = quantidade_palavras;
-                    alvo->ID = quantidade_palavras;
-                    repeticoes_palavras[quantidade_palavras]++;
-
-                    quantidade_palavras++;
-                }
-            }
-
-        insere_string(&str[profundidade+1], 0, root, dados); //Insere a palavra a partir da próxima letra e do início, é uma palavra nova
-        return (EXIT_SUCCESS);
-
+    if(!ehnumero(str) && (str[profundidade+1] != "'"[0] && str[profundidade+2] != '\0') && str[profundidade+1] != '-'){
+        if(!isdigit(str[profundidade+1]) && !isalpha(str[profundidade+1])){
+            str[profundidade+1] = '\0';
         }
     }
-    /*
-    *
-    *
-    */
     
 
     if(verbose){
@@ -201,7 +139,7 @@ int insere_string(char* str, int profundidade, Node* alvo, int dados){
             if(verbose){
                 printf("Existe [%c]\n", str[profundidade]);
             }
-            insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
+            insere_string(str, tamanho, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
             return (EXIT_SUCCESS);
         }else{
            if(!atual->nodes_internos[str[profundidade]]->termina){ //É uma letra existente mas é uma folha, portanto uma palavra nova
@@ -217,14 +155,25 @@ int insere_string(char* str, int profundidade, Node* alvo, int dados){
                atual->nodes_internos[str[profundidade]]->ID = quantidade_palavras;
                repeticoes_palavras[quantidade_palavras]++;
                quantidade_palavras++;
+               
+               /***Verifica se tem mais palavras na string***/
+                if(profundidade < tamanho-1){ //A palavra atual terminou mas ainda há palavras na string
+                    insere_string(&str[profundidade+2], strlen(&str[profundidade+2]), 0, root, dados); //Insere a string além do \0, é uma palavra nova
+                }
             }else{
                 if(verbose){
                    printf("[%c] faz parte da palavra\n", str[profundidade]);
                 }
                 //Aumenta o número de repetições desta palavra
                 repeticoes_palavras[atual->nodes_internos[str[profundidade]]->ID]++;
+                
+                /***Verifica se tem mais palavras na string***/
+                if(profundidade < tamanho-1){ //A palavra atual terminou mas ainda há palavras na string
+                    insere_string(&str[profundidade+2], strlen(&str[profundidade+2]), 0, root, dados); //Insere a string além do \0, é uma palavra nova
+                }
                 return (EXIT_SUCCESS);
             }
+
         }
     }else{ //A letra não existe, é necessário inserir
 
@@ -237,7 +186,7 @@ int insere_string(char* str, int profundidade, Node* alvo, int dados){
 
         atual->caractere = str[profundidade];
         if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
-            insere_string(str, profundidade+1, atual, dados); //Desce mais um nível
+            insere_string(str, tamanho, profundidade+1, atual, dados); //Desce mais um nível
         }else{ //se é uma folha então forma uma palavra
             atual->termina = 1;
             atual->dados = dados;
@@ -251,6 +200,11 @@ int insere_string(char* str, int profundidade, Node* alvo, int dados){
             repeticoes_palavras[quantidade_palavras]++;
 
             quantidade_palavras++;
+            
+            /***Verifica se tem mais palavras na string***/
+            if(profundidade < tamanho-1){ //A palavra atual terminou mas ainda há palavras na string
+               insere_string(&str[profundidade+2], strlen(&str[profundidade+2]), 0, root, dados); //Insere a string além do \0, é uma palavra nova
+           }
         }
     }
     return (EXIT_FAILURE);
@@ -278,7 +232,7 @@ int main(int argc, char** argv) {
         while(fscanf(input, "%s", palavra) != EOF){ 
             strcpy(palavra, escape_str(palavra)); //Copia a palavra sanitizada para o buffer
             if(strlen(palavra) > 0){ //Se a palavra não for vazia, insere
-                insere_string(palavra, 0, root, 0);
+                insere_string(palavra, strlen(palavra), 0, root, 0);
             }
         }
         //mostra_tudo(root, 0, BUFFER); 
@@ -301,7 +255,7 @@ int main(int argc, char** argv) {
             }
         }else{
             if(repeticoes_palavras[indices_palavras[i]] > 1){
-                fprintf(stdout, "%d %s\n", repeticoes_palavras[indices_palavras[i]], palavras_unicas[indices_palavras[i]]);
+                fprintf(stdout, "%s\n", palavras_unicas[indices_palavras[i]]);
             }
         }
     }
