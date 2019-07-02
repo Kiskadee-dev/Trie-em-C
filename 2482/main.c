@@ -50,7 +50,7 @@ void mostra_tudo(Node* node, int profundidade, char *buffer){
 }
 
 int checa_string(char *str, int profundidade, Node* node){
-    if(profundidade < strlen(str)-1){
+    if(str[profundidade+1] != '\0'){
         if(node->nodes_internos[str[profundidade]] != NULL){
             node = node->nodes_internos[str[profundidade]];
             return checa_string(str, profundidade+1, node);
@@ -81,7 +81,7 @@ int insere_string(char *str, int profundidade, Node* alvo, char* dados){
         }
         Node* atual = alvo; //Alvo é o node escolhido, se inicia na raiz e desce até o fim.
         if(atual->nodes_internos[str[profundidade]] != NULL){ //A letra existe, não é necessário inserir nada, desce para o próximo nível
-            if(profundidade < strlen(str)-1){
+            if(str[profundidade+1] != '\0'){
                 if(verbose){
                     printf("Existe [%c]\n", str[profundidade]);
                 }
@@ -112,7 +112,7 @@ int insere_string(char *str, int profundidade, Node* alvo, char* dados){
             atual = node;
 
             atual->caractere = str[profundidade];
-            if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
+            if(str[profundidade+1] != '\0'){ //Não é uma folha, portanto não é uma palavra
                 atual->profundidade=profundidade;
                 insere_string(str, profundidade+1, atual, dados); //Desce mais um nível
             }else{ //se é uma folha então forma uma palavra

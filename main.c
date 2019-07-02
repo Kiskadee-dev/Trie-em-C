@@ -180,12 +180,12 @@ int insere_string(char* str, int tamanho, int profundidade, Node* alvo, int dado
         //Encontra um node vago dentro do node *Usando a letra como índice por performance
         if(verbose)
             printf("Inserindo [%c]\n", str[profundidade]);
-        Node* node = calloc(1, sizeof(Node));
-        atual->nodes_internos[str[profundidade]] = node;
-        atual = node;
+
+        atual->nodes_internos[str[profundidade]] = calloc(1, sizeof(Node));;
+        atual = atual->nodes_internos[str[profundidade]];
 
         atual->caractere = str[profundidade];
-        if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
+        if(str[profundidade+1] != '\0'){ //Não é uma folha, portanto não é uma palavra
             insere_string(str, tamanho, profundidade+1, atual, dados); //Desce mais um nível
         }else{ //se é uma folha então forma uma palavra
             atual->termina = 1;

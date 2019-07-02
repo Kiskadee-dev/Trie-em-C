@@ -38,7 +38,7 @@ void mostra_tudo(Node* node, int profundidade, char *buffer){
 }
 
 double checa_string(char *str, int profundidade, Node* node){
-    if(profundidade < strlen(str)-1){
+    if(str[profundidade+1] != '\0'){
         if(node->nodes_internos[str[profundidade]] != NULL){
             node = node->nodes_internos[str[profundidade]];
             return checa_string(str, profundidade+1, node);
@@ -56,7 +56,7 @@ double checa_string(char *str, int profundidade, Node* node){
 }
 
 int insere_string(char *str, int profundidade, Node* alvo, double dados){
-    if(profundidade < strlen(str)){
+    if(str[profundidade] != '\0'){
         if(verbose){
             if(profundidade == 0){
                 printf("PALAVRA: [%s]\n", str);
@@ -64,46 +64,43 @@ int insere_string(char *str, int profundidade, Node* alvo, double dados){
             printf("Inserir [%c], profundidade=[%d]\n", str[profundidade], profundidade);
             
         }
-        Node* atual = alvo; //Alvo é o node escolhido, se inicia na raiz e desce até o fim.
-        if(atual->nodes_internos[str[profundidade]] != NULL){ //A letra existe, não é necessário inserir nada, desce para o próximo nível
-            if(profundidade < strlen(str)-1){
-                if(verbose){
-                    printf("Existe [%c]\n", str[profundidade]);
-                }
-            }else{
-               if(!atual->nodes_internos[str[profundidade]]->termina){ //É uma letra existente mas é uma folha, portanto uma palavra nova
-                   atual->nodes_internos[str[profundidade]]->termina = 1;
-                   atual->nodes_internos[str[profundidade]]->dados = dados;
+        Node* atual = alvo;
+	if(atual->nodes_internos[str[profundidade]] != NULL){
+		if(str[profundidade+1] != '\0'){
+		    if(verbose){
+			printf("Existe [%c]\n", str[profundidade]);
+		    }
+		    insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
+		    return (EXIT_SUCCESS);
+	    }else{
+	       if(!atual->nodes_internos[str[profundidade]]->termina){ //É uma letra existente mas é uma folha, portanto uma palavra nova
+		   atual->nodes_internos[str[profundidade]]->termina = 1;
+		   atual->nodes_internos[str[profundidade]]->dados = dados;
 
-                    if(verbose){
-                       printf("Existe [%c], mas eh uma palavra nova\n", str[profundidade]);
-                    }
-                }else{
-                    if(verbose){
-                       printf("[%c] faz parte da palavra\n", str[profundidade]);
-                    }
-                }
-            }
-
-            insere_string(str, profundidade+1, atual->nodes_internos[str[profundidade]], dados); //O node atual existe, insere o próximo dentro dele
-            return 0;
+		    if(verbose){
+		       printf("Existe [%c], mas eh uma palavra nova\n", str[profundidade]);
+		    }
+		}else{
+		    if(verbose){
+		       printf("[%c] faz parte da palavra\n", str[profundidade]);
+		    }
+		}
+		
+	    }
         }else{ //A letra não existe, é necessário inserir
             
             //Encontra um node vago dentro do node *Usando a letra como índice por performance
             if(verbose)
                 printf("Inserindo [%c]\n", str[profundidade]);
-            Node *node = calloc(1, sizeof(Node));
-            atual->nodes_internos[str[profundidade]] = node;
-            atual = node;
+	
+	    atual->nodes_internos[str[profundidade]] = calloc(1, sizeof(Node));;
+            atual = atual->nodes_internos[str[profundidade]];
 
-            if(profundidade < strlen(str)-1){ //Não é uma folha, portanto não é uma palavra
-                atual->caractere = str[profundidade];
-                atual->termina=0;
-                atual->profundidade=profundidade;
+	    atual->caractere = str[profundidade];
 
+            if(str[profundidade+1] != '\0'){ //Não é uma folha, portanto não é uma palavra
                 insere_string(str, profundidade+1, atual, dados); //Desce mais um nível
             }else{ //se é uma folha então forma uma palavra
-                atual->caractere = str[profundidade];
                 atual->termina=1;
                 atual->dados=dados;
                 atual->profundidade = profundidade;
@@ -111,22 +108,16 @@ int insere_string(char *str, int profundidade, Node* alvo, double dados){
                     printf("Nova palavra! => %lf\n", dados);
             }
         }
+    return (EXIT_SUCCESS);
     }
-    return 1;
+    return (EXIT_FAILURE);
 }
 
+
 int main(int argc, char** argv) {
-    if(argc > 1){
-        if(strcmp(argv[1], "--v") == 0){
-            verbose=1;
-        }
-    }
 
     //Cria o node inicial e aloca seus nodes internos
-    Node root;
-    for(int i = 0; i < tamanho_nodes_internos; i++){
-        root.nodes_internos[i] = malloc(sizeof(Node));
-    }
+    Node* root = calloc(1, sizeof(Node));
    
     int N, M;
     scanf("%d %d", &N, &M);
@@ -134,7 +125,7 @@ int main(int argc, char** argv) {
     double pontos;
     for(int i = 0; i < N; i++){
     	scanf(" %s%lf", cargo, &pontos);
-    	insere_string(cargo, 0, &root, pontos);
+    	insere_string(cargo, 0, root, pontos);
     }
     char palavra[2000];
     for(int i = 0; i < M; i++){
@@ -143,7 +134,7 @@ int main(int argc, char** argv) {
 		scanf(" %s", palavra);
 		if(strcmp(palavra, ".") != 0){
 			//printf("%s\n", palavra);
-			pontos += checa_string(palavra, 0, &root);
+			pontos += checa_string(palavra, 0, root);
 		}else{
 			break;
 		}
